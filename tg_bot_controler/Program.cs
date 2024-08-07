@@ -20,11 +20,12 @@ namespace tg_bot_controler
 
         static string awaitingUrlChatId = null;
         static string awaitingPlaySoundChatId = null;
+        //static string awaitingScreenshotChatId = null;
 
         static ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup(new[]
                     {
-                        new KeyboardButton[] { "Open URL"},
-                        new KeyboardButton[] { "Play sound" },
+                        new KeyboardButton[] { "Open URL", "Play sound"},
+                        new KeyboardButton[] { "Make Screenshot" },
                     })
         {
             ResizeKeyboard = true
@@ -35,7 +36,7 @@ namespace tg_bot_controler
 
         static void Main(string[] args)
         {
-            var bot = new TelegramBotClient("7376898141:AAHjm3jtPbrkOqZJqfj_cuUhS-6hpxVLvMk");
+            var bot = new TelegramBotClient("7392660717:AAHqY-9JjNcsfoT6A6vsDokkoaR-C0K0KX0");
             Console.WriteLine("Bot Started");
 
             bot.StartReceiving(update, error);
@@ -72,6 +73,32 @@ namespace tg_bot_controler
                     return;
                 }
             }
+
+
+            //отправка скриншота
+            /*if (awaitingScreenshotChatId != null && awaitingScreenshotChatId == chatId.ToString())
+            {
+                try
+                {
+                    if (CheckReturn(message.Text, chatId, client))
+                    {
+                        return;
+                    }
+                    ScreenshotHelper screenshot = new ScreenshotHelper();
+                    screenshot.TakeScreenshot(@"C:\Users\serge\Desktop\AudioForTgBot\screen.png");
+                    Console.WriteLine("скрин сделан");
+                    await client.SendTextMessageAsync(chatId, "URl успешно открылся");
+                    awaitingScreenshotChatId = null;
+                    ReturnToHome(chatId, client);
+                    return;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                    await client.SendTextMessageAsync(chatId, "что-то пошло нет так. Для возврата напишите /return или попробуйте вставить URl заново");
+                    return;
+                }
+            }*/
 
             //проигрывание звука
             if (awaitingPlaySoundChatId != null && awaitingPlaySoundChatId == chatId.ToString())
@@ -157,6 +184,27 @@ namespace tg_bot_controler
                 {
                     await client.SendTextMessageAsync(chatId, "отправьте звуковой файл в формате mp3");
                     awaitingPlaySoundChatId = chatId.ToString();
+                    return;
+                }
+
+                //отправка скриншота
+                if (message.Text == "Make Screenshot")
+                {
+                    string screenpath = @"C:\Users\serge\Desktop\AudioForTgBot\screen.png";
+                    ScreenshotHelper screenshot = new ScreenshotHelper();
+                    await screenshot.TakeScreenshot(screenpath);
+                    Console.WriteLine("скрин сделан");
+
+                    var stream = new FileStream(screenpath, FileMode.Open, FileAccess.Read);
+
+                    await client.SendPhotoAsync(
+                        chatId: chatId,
+                        photo: new InputFileStream(stream, "Screenshot.jpg"),
+                        caption: ""
+                    );
+
+                    System.IO.File.Delete(screenpath);
+                    ReturnToHome(chatId,client);
                     return;
                 }
                 return;
