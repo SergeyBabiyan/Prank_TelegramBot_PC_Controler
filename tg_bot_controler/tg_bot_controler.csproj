@@ -112,7 +112,7 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ScreenshotHelper.cs" />
+    <Compile Include="PhotoManager.cs" />
     <Compile Include="SoundPlayer.cs" />
   </ItemGroup>
   <ItemGroup>
