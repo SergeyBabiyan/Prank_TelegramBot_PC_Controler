@@ -33,5 +33,14 @@ namespace tg_bot_controler
             reader = null;
             File.Delete(pathSound);
         }
+
+        public void SetOutputDevice()
+        {
+            for (int n = -1; n < WaveOut.DeviceCount; n++)
+            {
+                var caps = WaveOut.GetCapabilities(n);
+                Console.WriteLine($"{n}: {caps.ProductName}");
+            }
+        }
     }
 }
