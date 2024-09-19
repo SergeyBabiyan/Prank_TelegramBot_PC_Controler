@@ -15,8 +15,6 @@ namespace tg_bot_controler
     internal class TelegramBot
     {
 
-
-
         //чаты ожидающие выполнения
         static string awaitingUrlChatId = null;
         static string awaitingPlaySoundChatId = null;
